@@ -330,12 +330,12 @@
           </select>
         </div>
         <div class="simple-field">
-          <label><span>할인율</span><span id="s-discount-val" style="font-weight: 500;">15%</span></label>
-          <input type="range" id="s-discount" min="0" max="50" step="1" value="15" />
-        </div>
-        <div class="simple-field">
           <label><span>시간당 단가 (정가)</span><span id="s-hourly-val" style="font-weight: 500;">36,000원</span></label>
           <input type="range" id="s-hourly" min="20000" max="60000" step="500" value="36000" />
+        </div>
+        <div class="simple-field">
+          <label><span>할인율</span><span id="s-discount-val" style="font-weight: 500;">15%</span></label>
+          <input type="range" id="s-discount" min="0" max="50" step="1" value="15" />
         </div>
         <div class="simple-result">
           <div class="simple-result-row"><span style="color: var(--color-text-secondary);">정가 (월)</span><span id="s-list-price">-</span></div>
@@ -397,16 +397,21 @@
           <input type="range" id="s-vat" min="0" max="20" step="0.5" value="10" />
         </div>
         <div class="simple-field">
-          <label><span>기타 지출 (원/학생/월)</span></label>
-          <input type="number" id="s-misc" value="5000" min="0" max="100000" step="1000" />
-          <div style="font-size: 11px; color: var(--color-text-tertiary);">관리비/마케팅비를 학생당 환산</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="margin: 0;"><span>기타 지출 항목 (원/학생/월)</span></label>
+            <button id="s-misc-add" style="font-size: 11px; padding: 2px 8px; height: 22px;"><i class="ti ti-plus"></i> 추가</button>
+          </div>
+          <div id="s-misc-list" style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;"></div>
+          <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px;">
+            예: 마케팅비, PG수수료, CS, 플랫폼비 등 학생당 환산
+          </div>
         </div>
         <div class="simple-result">
           <div class="simple-result-row"><span style="color: var(--color-text-secondary);">월 학생 결제액</span><span id="s-rev">-</span></div>
           <div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 부가세</span><span id="s-vat-amt" style="color: var(--color-text-danger);">-</span></div>
           <div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 강사비</span><span id="s-tc" style="color: var(--color-text-danger);">-</span></div>
           <div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 파트너</span><span id="s-pc" style="color: var(--color-text-danger);">-</span></div>
-          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 기타</span><span id="s-mc" style="color: var(--color-text-danger);">-</span></div>
+          <div id="s-misc-result-rows"></div>
           <div class="simple-result-row total" id="s-profit-row"><span>학생 1명당 월 순이익</span><span id="s-profit">-</span></div>
         </div>
       </div>
@@ -831,6 +836,41 @@ const INITIAL_TEACHERS = [
   // =================================================================
   let userTouchedDiscount = false;
 
+  // 기타 지출 항목 (사용자가 자유롭게 추가/삭제)
+  // 초기값: 빈 상태로 시작 (예시 항목은 사용자가 추가)
+  let miscItems = [
+    { name: '마케팅비', amount: 0 }
+  ];
+
+  function renderMiscList(){
+    const list = $('s-misc-list');
+    list.innerHTML = miscItems.map((item, idx) => `
+      <div style="display: grid; grid-template-columns: 1fr 100px 28px; gap: 6px; align-items: center;">
+        <input type="text" data-misc-idx="${idx}" data-misc-field="name" value="${item.name}" placeholder="항목명" style="font-size: 12px; height: 28px; padding: 4px 8px;"/>
+        <input type="number" data-misc-idx="${idx}" data-misc-field="amount" value="${item.amount}" min="0" max="1000000" step="500" style="font-size: 12px; height: 28px; padding: 4px 8px; text-align: right;"/>
+        <button data-misc-remove="${idx}" style="font-size: 11px; padding: 0; height: 28px; width: 28px;" aria-label="삭제"><i class="ti ti-x"></i></button>
+      </div>
+    `).join('');
+    list.querySelectorAll('input').forEach(el => {
+      el.addEventListener('input', e => {
+        const idx = +e.target.dataset.miscIdx;
+        const field = e.target.dataset.miscField;
+        let val = e.target.value;
+        if (field === 'amount') val = +val || 0;
+        miscItems[idx][field] = val;
+        calcSimple();
+      });
+    });
+    list.querySelectorAll('button[data-misc-remove]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const idx = +e.currentTarget.dataset.miscRemove;
+        miscItems.splice(idx, 1);
+        renderMiscList();
+        calcSimple();
+      });
+    });
+  }
+
   // 강사 1명 + N명 학생일 때의 월 손익 계산 (스케줄 가동률 차트용)
   function simpleTeacherProfit(students, params){
     const { monthlyPaidPrice, salaryKRW, thirteenthMonthly, incentiveRate, partnerRate, vat, miscPerStudent } = params;
@@ -865,7 +905,8 @@ const INITIAL_TEACHERS = [
     const isPartner = $('s-is-partner').value === '1';
     const partnerRate = isPartner ? (+$('s-partner').value / 100) : 0;
     const vat = +$('s-vat').value / 100;
-    const miscPerStudent = +$('s-misc').value;
+    // 기타 지출: 항목들 합계
+    const miscPerStudent = miscItems.reduce((sum, item) => sum + (item.amount || 0), 0);
 
     $('s-weekly-val').textContent = weekly + '회';
     $('s-discount-val').textContent = (discount*100).toFixed(0) + '%';
@@ -913,7 +954,12 @@ const INITIAL_TEACHERS = [
     $('s-vat-amt').textContent = '-' + fmt(vatAmount) + '원';
     $('s-tc').textContent = '-' + fmt(teacherCostPerStudent) + '원';
     $('s-pc').textContent = '-' + fmt(partnerCost) + '원';
-    $('s-mc').textContent = '-' + fmt(miscPerStudent) + '원';
+    // 기타 지출: 합계 먼저, 그 아래에 각 항목 (들여쓰기 X)
+    const miscRows = miscItems.length > 0
+      ? `<div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 기타 합계</span><span style="color: var(--color-text-danger);">-${fmt(miscPerStudent)}원</span></div>` +
+        miscItems.map(item => `<div class="simple-result-row" style="font-size: 11px; padding-left: 12px;"><span style="color: var(--color-text-tertiary);">· ${item.name || '(이름 없음)'}</span><span style="color: var(--color-text-tertiary);">${fmt(item.amount || 0)}원</span></div>`).join('')
+      : `<div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 기타</span><span style="color: var(--color-text-tertiary);">0원</span></div>`;
+    $('s-misc-result-rows').innerHTML = miscRows;
     $('s-profit').textContent = fmt(profit) + '원';
     $('s-profit-row').style.color = profit >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)';
 
@@ -1086,7 +1132,7 @@ const INITIAL_TEACHERS = [
       insights.push(`💪 강사 1명 풀가동(${maxStud.toFixed(1)}명) 시 월 순이익: <strong>${fmt(fullResult.profit)}원</strong>`);
     }
     const teacherCostShare = monthlyPaidPrice > 0 ? (teacherCostPerStudent / monthlyPaidPrice * 100) : 0;
-    insights.push(`💡 수강료 대비 강사비 비중: ${teacherCostShare.toFixed(1)}% <span style="color: var(--color-text-tertiary);">(업계 평균 40-60%)</span>`);
+    insights.push(`💡 수강료 대비 강사비 비중: ${teacherCostShare.toFixed(1)}%`);
     $('s-insights').innerHTML = insights.join('<br>');
   }
 
@@ -1134,10 +1180,20 @@ const INITIAL_TEACHERS = [
     calc();
   });
   ['students','partner-pct','partner-rate','fx','bonus','severance','admin','misc','vat','tax'].forEach(id => $(id).addEventListener('input', calc));
-  ['s-duration','s-weekly','s-hourly','s-salary','s-fx','s-tier','s-students','s-is-partner','s-partner','s-vat','s-misc'].forEach(id => {
+  ['s-duration','s-weekly','s-hourly','s-salary','s-fx','s-tier','s-students','s-is-partner','s-partner','s-vat'].forEach(id => {
     $(id).addEventListener('input', calcSimple);
     $(id).addEventListener('change', calcSimple);
   });
+
+  // 기타 지출 추가 버튼
+  $('s-misc-add').addEventListener('click', () => {
+    miscItems.push({ name: '', amount: 0 });
+    renderMiscList();
+    calcSimple();
+  });
+
+  // 초기 렌더링
+  renderMiscList();
 
   calcSimple();
 })();
