@@ -148,8 +148,8 @@
     padding: 1.5rem;
     margin-top: 16px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
   }
   .big-summary-item {
     text-align: center;
@@ -359,11 +359,20 @@
         <div class="simple-field">
           <label><span>인센티브 등급</span></label>
           <select id="s-tier">
+            <option value="none">없음 (0%)</option>
             <option value="silver" selected>실버 (3%)</option>
             <option value="gold">골드 (6%)</option>
             <option value="platinum">플래티넘 (9%)</option>
           </select>
         </div>
+        <div class="simple-field">
+          <label><span>일일 근무시간</span></label>
+          <select id="s-daily-hours">
+            <option value="240" selected>4시간 (5-9PM)</option>
+            <option value="480">8시간 (풀타임)</option>
+          </select>
+        </div>
+
         <div class="simple-field">
           <label><span>강사 스케줄 가동률</span><span id="s-students-val" style="font-weight: 500;">73% (20명)</span></label>
           <input type="range" id="s-students" min="5" max="100" step="5" value="73" />
@@ -427,10 +436,17 @@
         </div>
       </div>
       <div class="big-summary-item">
-        <div class="big-summary-label"><i class="ti ti-trending-up"></i> 학생 1명당 순이익 (월)</div>
+        <div class="big-summary-label"><i class="ti ti-user"></i> 학생 1명당 순이익 (월)</div>
         <div class="big-summary-value" id="big-profit">0원</div>
         <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 6px;">
-          마진율: <span id="big-margin">0%</span> · 약정 총 이익: <span id="big-total-profit">0원</span>
+          마진율: <span id="big-margin">0%</span> · 약정 총: <span id="big-total-profit">0원</span>
+        </div>
+      </div>
+      <div class="big-summary-item" style="background: var(--color-bg-tertiary);">
+        <div class="big-summary-label"><i class="ti ti-trending-up"></i> 강사 1명 월 순이익 <span id="big-current-pct" style="color: var(--color-text-tertiary); font-size: 11px;">(현재 73%)</span></div>
+        <div class="big-summary-value" id="big-full-profit">0원</div>
+        <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 6px;">
+          담당 <span id="big-full-students">0</span>명 × 학생당 순이익
         </div>
       </div>
     </div>
@@ -483,7 +499,7 @@
 </div>
 
 <script>
-const TEACHER_WORK = { workDays: 5, dailyMinutes: 240, slotMinutes: 20, breakSlotsPerDay: 1, minSessionsPerWeek: 2 };
+const TEACHER_WORK = { workDays: 5, dailyMinutes: 240, slotMinutes: 20, minSessionsPerWeek: 2 };
 const PRICE = {
   '1_20':  [48000, 96000, 144000, 192000, 240000],
   '1_40':  [96000, 192000, 288000, 384000, 480000],
@@ -503,7 +519,7 @@ const PRODUCTS = [
   {id:'p6_40_w5',  months:6,  duration:40, weekly:5, label:'6개월 40분 주5회 (주력)',     pct: 15},
   {id:'p12_40_w3', months:12, duration:40, weekly:3, label:'12개월 40분 주3회 (20% 할인)', pct: 15}
 ];
-const INCENTIVE_RATE = { 'silver': 0.03, 'gold': 0.06, 'platinum': 0.09 };
+const INCENTIVE_RATE = { 'none': 0, 'silver': 0.03, 'gold': 0.06, 'platinum': 0.09 };
 const PERIOD_DISCOUNT = { 1: 0, 3: 10, 6: 15, 12: 20 };
 const INITIAL_TEACHERS = [
   { name: '강사1', tier: 'gold',     salaryPHP: 16000, allocation: 20 },
@@ -522,9 +538,21 @@ const INITIAL_TEACHERS = [
   const $ = id => document.getElementById(id);
   const fmt = n => new Intl.NumberFormat('ko-KR').format(Math.round(n));
   const productPrice = p => PRICE[`${p.months}_${p.duration}`][p.weekly-1];
-  function maxStudentsPerTeacher(){
-    const dailySlots = Math.floor(TEACHER_WORK.dailyMinutes / TEACHER_WORK.slotMinutes);
-    return ((dailySlots - TEACHER_WORK.breakSlotsPerDay) * TEACHER_WORK.workDays) / TEACHER_WORK.minSessionsPerWeek;
+  // 학생 1명당 주당 슬롯 수 (수업시간/슬롯 × 주당 횟수)
+  function studentWeeklySlots(weekly, duration){
+    return (duration / TEACHER_WORK.slotMinutes) * weekly;
+  }
+  // 강사 1명이 가질 수 있는 주당 총 슬롯 (휴게 없이, 입력 시간이 곧 실 수업 가능 시간)
+  function teacherWeeklySlots(dailyMinutes){
+    const dailyMin = dailyMinutes || TEACHER_WORK.dailyMinutes;
+    const dailySlots = Math.floor(dailyMin / TEACHER_WORK.slotMinutes);
+    return dailySlots * TEACHER_WORK.workDays;
+  }
+  // 강사 1명당 최대 학생수
+  function maxStudentsPerTeacher(weekly, duration, dailyMinutes){
+    weekly = weekly || TEACHER_WORK.minSessionsPerWeek;
+    duration = duration || TEACHER_WORK.slotMinutes;
+    return teacherWeeklySlots(dailyMinutes) / studentWeeklySlots(weekly, duration);
   }
 
   let currentPeriod = 1;
@@ -568,6 +596,7 @@ const INITIAL_TEACHERS = [
         <td style="padding: 6px;"><input type="text" data-field="name" value="${t.name}" style="width: 80px; font-size: 12px;"/></td>
         <td style="padding: 6px; text-align: center;">
           <select data-field="tier" style="font-size: 12px;">
+            <option value="none" ${t.tier==='none'?'selected':''}>없음 (0%)</option>
             <option value="silver" ${t.tier==='silver'?'selected':''}>실버 (3%)</option>
             <option value="gold" ${t.tier==='gold'?'selected':''}>골드 (6%)</option>
             <option value="platinum" ${t.tier==='platinum'?'selected':''}>플래티넘 (9%)</option>
@@ -602,10 +631,15 @@ const INITIAL_TEACHERS = [
   function computeProfit(opts){
     const { targetStudents, partnerPct, partnerRate, fx, bonus, sev, admin, misc, vat, taxRate, productPcts, teachersOverride } = opts;
     let avgRevenuePerStudent = 0;
+    let avgStudentSlots = 0;  // 학생 1명이 차지하는 평균 슬롯 (가중평균)
     const productList = productPcts || PRODUCTS;
     const mixSum = productList.reduce((s,p) => s + p.pct, 0) || 1;
-    productList.forEach(p => { avgRevenuePerStudent += productPrice(p) * (p.pct / mixSum); });
-    const maxStudents = maxStudentsPerTeacher();
+    productList.forEach(p => {
+      avgRevenuePerStudent += productPrice(p) * (p.pct / mixSum);
+      avgStudentSlots += studentWeeklySlots(p.weekly, p.duration) * (p.pct / mixSum);
+    });
+    // 최대 학생수 = 강사 주당 슬롯 ÷ 학생 1명 평균 슬롯
+    const maxStudents = avgStudentSlots > 0 ? teacherWeeklySlots() / avgStudentSlots : 0;
     const teacherList = teachersOverride || teachers;
     const allocSum = teacherList.reduce((s,t) => s + t.allocation, 0) || 1;
     const studentsPerTeacher = teacherList.map(t => targetStudents * (t.allocation / allocSum));
@@ -899,8 +933,10 @@ const INITIAL_TEACHERS = [
     const salaryPHP = +$('s-salary').value;
     const fx = +$('s-fx').value;
     const tier = $('s-tier').value;
+    const dailyMinutes = +$('s-daily-hours').value;  // 240(4h) or 480(8h)
     const utilPct = +$('s-students').value;  // 가동률 %
-    const maxStudPreview = maxStudentsPerTeacher();
+    // 현재 수업 조건 + 일일 근무시간으로 최대 수용 학생수 계산
+    const maxStudPreview = maxStudentsPerTeacher(weekly, duration, dailyMinutes);
     const studentsPerTeacher = (utilPct / 100) * maxStudPreview;  // 학생수로 변환
     const isPartner = $('s-is-partner').value === '1';
     const partnerRate = isPartner ? (+$('s-partner').value / 100) : 0;
@@ -972,7 +1008,7 @@ const INITIAL_TEACHERS = [
     $('big-total-profit').textContent = fmt(profit * months) + '원';
 
     // =========== 🆕 스케줄 가동률별 손익 차트 ===========
-    const maxStud = maxStudentsPerTeacher();
+    const maxStud = maxStudentsPerTeacher(weekly, duration, dailyMinutes);
     $('util-max').textContent = maxStud.toFixed(1) + '명';
 
     const chartParams = {
@@ -984,6 +1020,13 @@ const INITIAL_TEACHERS = [
       vat,
       miscPerStudent
     };
+
+    // 현재 가동률 기준 강사 1명의 월 순이익 (큰 카드 3번째)
+    const currentCapResult = simpleTeacherProfit(studentsPerTeacher, chartParams);
+    $('big-full-profit').textContent = fmt(currentCapResult.profit) + '원';
+    $('big-full-profit').style.color = currentCapResult.profit >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)';
+    $('big-full-students').textContent = studentsPerTeacher.toFixed(1);
+    $('big-current-pct').textContent = `(현재 ${utilPct}%)`;
 
     // 0~100% 가동률에 따른 학생수 및 손익
     const utilPoints = [];
@@ -1180,7 +1223,7 @@ const INITIAL_TEACHERS = [
     calc();
   });
   ['students','partner-pct','partner-rate','fx','bonus','severance','admin','misc','vat','tax'].forEach(id => $(id).addEventListener('input', calc));
-  ['s-duration','s-weekly','s-hourly','s-salary','s-fx','s-tier','s-students','s-is-partner','s-partner','s-vat'].forEach(id => {
+  ['s-duration','s-weekly','s-hourly','s-salary','s-fx','s-tier','s-daily-hours','s-students','s-is-partner','s-partner','s-vat'].forEach(id => {
     $(id).addEventListener('input', calcSimple);
     $(id).addEventListener('change', calcSimple);
   });
@@ -1197,15 +1240,6 @@ const INITIAL_TEACHERS = [
 
   calcSimple();
 })();
-</script>
-
-<!-- Chart.js annotation plugin -->
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
-<script>
-  // 어노테이션 플러그인 등록 (페이지 로드 후)
-  if (window.Chart && window['chartjs-plugin-annotation']) {
-    Chart.register(window['chartjs-plugin-annotation']);
-  }
 </script>
 </body>
 </html>
