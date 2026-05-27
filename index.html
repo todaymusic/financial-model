@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>교육 사업 순이익 시뮬레이션</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
   :root {
@@ -93,6 +94,78 @@
   }
   input:focus, select:focus { border-color: var(--color-text-primary); }
   table { border-collapse: collapse; }
+
+  .simple-panel {
+    background: var(--color-bg-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .simple-panel h3 {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0 0 4px 0;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .simple-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .simple-field label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    display: flex;
+    justify-content: space-between;
+  }
+  .simple-result {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+  }
+  .simple-result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  .simple-result-row.total {
+    border-top: 0.5px solid var(--color-border-tertiary);
+    margin-top: 6px;
+    padding-top: 8px;
+    font-weight: 500;
+    font-size: 15px;
+  }
+  .big-summary {
+    background: var(--color-bg-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 1.5rem;
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .big-summary-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--color-bg-secondary);
+    border-radius: var(--border-radius-md);
+  }
+  .big-summary-label {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: 8px;
+  }
+  .big-summary-value {
+    font-size: 32px;
+    font-weight: 500;
+  }
 </style>
 </head>
 <body>
@@ -103,9 +176,10 @@
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px;">
     <div style="display: flex; gap: 4px; background: var(--color-bg-tertiary); padding: 4px; border-radius: var(--border-radius-md);">
       <button class="tab-btn" data-tab="sim" style="background: var(--color-bg-primary);"><i class="ti ti-adjustments"></i> 시뮬레이션</button>
+      <button class="tab-btn" data-tab="simple" style="background: transparent;"><i class="ti ti-calculator"></i> 간소화 (1:1 단위)</button>
       <button class="tab-btn" data-tab="sens" style="background: transparent;"><i class="ti ti-chart-bar"></i> 민감도 분석</button>
     </div>
-    <div style="display: flex; align-items: center; gap: 8px;">
+    <div id="period-toggle-wrapper" style="display: flex; align-items: center; gap: 8px;">
       <span style="font-size: 12px; color: var(--color-text-secondary);">기간 기준</span>
       <div style="display: flex; gap: 2px; background: var(--color-bg-tertiary); padding: 3px; border-radius: var(--border-radius-md);">
         <button class="period-btn" data-period="1" style="background: var(--color-bg-primary); padding: 4px 12px; height: 28px;">1개월</button>
@@ -117,6 +191,7 @@
     </div>
   </div>
 
+  <!-- 시뮬레이션 탭 (변경 없음) -->
   <div id="tab-sim">
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem;">
       <div style="background: var(--color-bg-primary); border-radius: var(--border-radius-md); padding: 1rem; border: 0.5px solid var(--color-border-tertiary);">
@@ -136,37 +211,27 @@
         <div id="kpi-capacity" style="font-size: 22px; font-weight: 500;">0명</div>
       </div>
     </div>
-
     <div id="capacity-warning" style="display: none; background: var(--color-bg-warning); color: var(--color-text-warning); padding: 10px 14px; border-radius: var(--border-radius-md); margin-bottom: 1rem; font-size: 13px;">
-      <i class="ti ti-alert-triangle"></i>
-      <span id="warn-msg"></span>
+      <i class="ti ti-alert-triangle"></i><span id="warn-msg"></span>
     </div>
-
     <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem;">
       <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">수강생 & 파트너 채널</div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
         <div>
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>모객 수강생 (목표)</span><span id="lbl-students" style="font-weight: 500;">100명</span>
-          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>모객 수강생</span><span id="lbl-students" style="font-weight: 500;">100명</span></div>
           <input type="range" id="students" min="10" max="2000" step="10" value="100" />
           <div id="lbl-channel-breakdown" style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px;">자체 70명 · 파트너 30명</div>
         </div>
         <div>
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>파트너 유입 비중</span><span id="lbl-partner-pct" style="font-weight: 500;">30%</span>
-          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>파트너 유입 비중</span><span id="lbl-partner-pct" style="font-weight: 500;">30%</span></div>
           <input type="range" id="partner-pct" min="0" max="100" step="1" value="30" />
         </div>
         <div>
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>파트너 분배율</span><span id="lbl-partner-rate" style="font-weight: 500;">25%</span>
-          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>파트너 분배율</span><span id="lbl-partner-rate" style="font-weight: 500;">25%</span></div>
           <input type="range" id="partner-rate" min="0" max="50" step="1" value="25" />
         </div>
       </div>
     </div>
-
     <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div style="font-size: 14px; font-weight: 500;">상품 믹스</div>
@@ -180,10 +245,9 @@
       <div id="mix-rows"></div>
       <button id="reset-mix" style="margin-top: 8px;"><i class="ti ti-refresh"></i> 기본값으로</button>
     </div>
-
     <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <div style="font-size: 14px; font-weight: 500;">강사 명단 <span style="font-weight: 400; color: var(--color-text-tertiary); font-size: 12px;">— 강사별 학생 배정 비중 직접 조정</span></div>
+        <div style="font-size: 14px; font-weight: 500;">강사 명단</div>
         <button id="add-teacher"><i class="ti ti-plus"></i> 강사 추가</button>
       </div>
       <div style="overflow-x: auto;">
@@ -194,10 +258,10 @@
               <th style="text-align: center; padding: 8px 6px; font-weight: 400;">등급</th>
               <th style="text-align: right; padding: 8px 6px; font-weight: 400;">월급 (PHP)</th>
               <th style="text-align: right; padding: 8px 6px; font-weight: 400;">월급 (원)</th>
-              <th style="text-align: center; padding: 8px 6px; font-weight: 400;">배정 비중 %</th>
+              <th style="text-align: center; padding: 8px 6px; font-weight: 400;">배정 %</th>
               <th style="text-align: center; padding: 8px 6px; font-weight: 400;">담당학생</th>
               <th style="text-align: right; padding: 8px 6px; font-weight: 400;">인센티브 (PHP)</th>
-              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">월 총비용 (원)</th>
+              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">월 총비용</th>
               <th></th>
             </tr>
           </thead>
@@ -206,17 +270,16 @@
       </div>
       <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 8px;" id="alloc-info">배정 비중 합계: 100%</div>
     </div>
-
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
       <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
         <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">회사 운영비</div>
-        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>PHP 환율 (1 PHP = ? 원)</span><span id="lbl-fx" style="font-weight: 500;">24원</span></div><input type="range" id="fx" min="15" max="35" step="0.5" value="24" /></div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>PHP 환율</span><span id="lbl-fx" style="font-weight: 500;">24원</span></div><input type="range" id="fx" min="15" max="35" step="0.5" value="24" /></div>
         <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>상여금 비율</span><span id="lbl-bonus" style="font-weight: 500;">20%</span></div><input type="range" id="bonus" min="0" max="100" step="5" value="20" /></div>
         <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>퇴직금 비율</span><span id="lbl-severance" style="font-weight: 500;">10%</span></div><input type="range" id="severance" min="0" max="20" step="0.5" value="10" /></div>
-        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>관리직원 인건비 (만)</span><span id="lbl-admin" style="font-weight: 500;">600만</span></div><input type="range" id="admin" min="0" max="5000" step="50" value="600" /></div>
-        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>기타 운영비 (만)</span><span id="lbl-misc" style="font-weight: 500;">300만</span></div><input type="range" id="misc" min="0" max="5000" step="50" value="300" /></div>
-        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>부가세 (VAT)</span><span id="lbl-vat" style="font-weight: 500;">10%</span></div><input type="range" id="vat" min="0" max="20" step="0.5" value="10" /></div>
-        <div><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>법인세율</span><span id="lbl-tax" style="font-weight: 500;">22%</span></div><input type="range" id="tax" min="0" max="40" step="1" value="22" /></div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>관리직원 (만)</span><span id="lbl-admin" style="font-weight: 500;">600만</span></div><input type="range" id="admin" min="0" max="5000" step="50" value="600" /></div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>기타 (만)</span><span id="lbl-misc" style="font-weight: 500;">300만</span></div><input type="range" id="misc" min="0" max="5000" step="50" value="300" /></div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>부가세</span><span id="lbl-vat" style="font-weight: 500;">10%</span></div><input type="range" id="vat" min="0" max="20" step="0.5" value="10" /></div>
+        <div><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>법인세</span><span id="lbl-tax" style="font-weight: 500;">22%</span></div><input type="range" id="tax" min="0" max="40" step="1" value="22" /></div>
       </div>
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
@@ -229,13 +292,169 @@
         </div>
       </div>
     </div>
-
     <div style="margin-top: 1rem; background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
       <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;"><span class="period-label">1개월</span> 손익 상세 (원)</div>
       <table id="pl-table" style="width: 100%; font-size: 13px;"></table>
     </div>
   </div>
 
+  <!-- ============ 간소화 탭 ============ -->
+  <div id="tab-simple" style="display: none;">
+    <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: var(--color-text-secondary);">
+      <i class="ti ti-info-circle"></i> <strong style="color: var(--color-text-primary); font-weight: 500;">강사 1명 + 학생 1명 단위 이코노믹스</strong> — 가격/월급/분배 세팅이 흑자인지 확인. 학생이 약정 기간을 모두 채운다고 가정.
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+
+      <!-- 1) 수강료 -->
+      <div class="simple-panel">
+        <h3><i class="ti ti-tag"></i> 1. 수강료 (학생 1명/월)</h3>
+        <div class="simple-field">
+          <label><span>수업 길이</span></label>
+          <select id="s-duration">
+            <option value="20">20분</option>
+            <option value="40" selected>40분</option>
+          </select>
+        </div>
+        <div class="simple-field">
+          <label><span>주당 횟수</span><span id="s-weekly-val" style="font-weight: 500;">3회</span></label>
+          <input type="range" id="s-weekly" min="1" max="5" step="1" value="3" />
+        </div>
+        <div class="simple-field">
+          <label><span>약정 기간</span></label>
+          <select id="s-months">
+            <option value="1">1개월</option>
+            <option value="3">3개월</option>
+            <option value="6" selected>6개월</option>
+            <option value="12">12개월</option>
+          </select>
+        </div>
+        <div class="simple-field">
+          <label><span>할인율</span><span id="s-discount-val" style="font-weight: 500;">15%</span></label>
+          <input type="range" id="s-discount" min="0" max="50" step="1" value="15" />
+        </div>
+        <div class="simple-field">
+          <label><span>시간당 단가 (정가)</span><span id="s-hourly-val" style="font-weight: 500;">36,000원</span></label>
+          <input type="range" id="s-hourly" min="20000" max="60000" step="500" value="36000" />
+        </div>
+        <div class="simple-result">
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">정가 (월)</span><span id="s-list-price">-</span></div>
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">할인 적용</span><span id="s-discount-amt" style="color: var(--color-text-danger);">-</span></div>
+          <div class="simple-result-row total" style="color: var(--color-text-success);"><span>학생 결제액 (월)</span><span id="s-paid-price">-</span></div>
+          <div class="simple-result-row" style="font-size: 11px;"><span style="color: var(--color-text-tertiary);">약정 총액</span><span id="s-total-contract" style="color: var(--color-text-tertiary);">-</span></div>
+        </div>
+      </div>
+
+      <!-- 2) 강사 비용 -->
+      <div class="simple-panel">
+        <h3><i class="ti ti-user"></i> 2. 강사 비용 (학생 1명 분담)</h3>
+        <div class="simple-field">
+          <label><span>월 기본급 (PHP)</span><span id="s-salary-val" style="font-weight: 500;">16,000 PHP</span></label>
+          <input type="range" id="s-salary" min="5000" max="40000" step="500" value="16000" />
+        </div>
+        <div class="simple-field">
+          <label><span>PHP 환율</span><span id="s-fx-val" style="font-weight: 500;">24원</span></label>
+          <input type="range" id="s-fx" min="15" max="35" step="0.5" value="24" />
+        </div>
+        <div class="simple-field">
+          <label><span>인센티브 등급</span></label>
+          <select id="s-tier">
+            <option value="silver" selected>실버 (3%)</option>
+            <option value="gold">골드 (6%)</option>
+            <option value="platinum">플래티넘 (9%)</option>
+          </select>
+        </div>
+        <div class="simple-field">
+          <label><span>강사 스케줄 가동률</span><span id="s-students-val" style="font-weight: 500;">73% (20명)</span></label>
+          <input type="range" id="s-students" min="5" max="100" step="5" value="73" />
+          <div style="font-size: 11px; color: var(--color-text-tertiary);">스케줄이 몇 % 차 있는지 (최대 27.5명 기준)</div>
+        </div>
+        <div class="simple-result">
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">강사 월급 (원)</span><span id="s-salary-krw">-</span></div>
+          <div class="simple-result-row" style="font-size: 12px;"><span style="color: var(--color-text-tertiary);">　└ 학생 1명당 분담</span><span id="s-salary-per" style="color: var(--color-text-tertiary);">-</span></div>
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">13th month (월)</span><span id="s-thirteenth-per">-</span></div>
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">인센티브 (월)</span><span id="s-incentive-per">-</span></div>
+          <div class="simple-result-row total" style="color: var(--color-text-danger);"><span>학생 1명당 월 강사비</span><span id="s-teacher-cost-per">-</span></div>
+        </div>
+      </div>
+
+      <!-- 3) 파트너 + 세금 + 기타 -->
+      <div class="simple-panel">
+        <h3><i class="ti ti-handshake"></i> 3. 파트너 + 세금 + 기타</h3>
+        <div class="simple-field">
+          <label><span>채널</span></label>
+          <select id="s-is-partner">
+            <option value="0">자체 (분배 없음)</option>
+            <option value="1" selected>파트너</option>
+          </select>
+        </div>
+        <div class="simple-field">
+          <label><span>파트너 분배율</span><span id="s-partner-val" style="font-weight: 500;">25%</span></label>
+          <input type="range" id="s-partner" min="0" max="50" step="1" value="25" />
+        </div>
+        <div class="simple-field">
+          <label><span>부가세 (VAT)</span><span id="s-vat-val" style="font-weight: 500;">10%</span></label>
+          <input type="range" id="s-vat" min="0" max="20" step="0.5" value="10" />
+        </div>
+        <div class="simple-field">
+          <label><span>기타 지출 (원/학생/월)</span></label>
+          <input type="number" id="s-misc" value="5000" min="0" max="100000" step="1000" />
+          <div style="font-size: 11px; color: var(--color-text-tertiary);">관리비/마케팅비를 학생당 환산</div>
+        </div>
+        <div class="simple-result">
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">월 학생 결제액</span><span id="s-rev">-</span></div>
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 부가세</span><span id="s-vat-amt" style="color: var(--color-text-danger);">-</span></div>
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 강사비</span><span id="s-tc" style="color: var(--color-text-danger);">-</span></div>
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 파트너</span><span id="s-pc" style="color: var(--color-text-danger);">-</span></div>
+          <div class="simple-result-row"><span style="color: var(--color-text-secondary);">- 기타</span><span id="s-mc" style="color: var(--color-text-danger);">-</span></div>
+          <div class="simple-result-row total" id="s-profit-row"><span>학생 1명당 월 순이익</span><span id="s-profit">-</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 핵심 결과 강조 -->
+    <div class="big-summary">
+      <div class="big-summary-item">
+        <div class="big-summary-label"><i class="ti ti-cash"></i> 학생 결제액 (월)</div>
+        <div class="big-summary-value" id="big-revenue" style="color: var(--color-text-success);">0원</div>
+        <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 6px;">
+          약정 <span id="big-months">6</span>개월 총액: <span id="big-total">0원</span>
+        </div>
+      </div>
+      <div class="big-summary-item">
+        <div class="big-summary-label"><i class="ti ti-trending-up"></i> 학생 1명당 순이익 (월)</div>
+        <div class="big-summary-value" id="big-profit">0원</div>
+        <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 6px;">
+          마진율: <span id="big-margin">0%</span> · 약정 총 이익: <span id="big-total-profit">0원</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🆕 강사 스케줄 가동률별 손익 차트 -->
+    <div style="margin-top: 16px; background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div style="font-size: 14px; font-weight: 500;"><i class="ti ti-clock"></i> 강사 스케줄 가동률별 월 손익 (강사 1명 기준)</div>
+        <div style="font-size: 12px; color: var(--color-text-secondary);">
+          최대 수용: <span id="util-max" style="font-weight: 500;">27.5명</span>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 12px;">
+        주당 수업 슬롯 55개 중 학생 수업으로 채워진 비율별 강사 1명 월 순이익. 빨간 점선이 손익분기점(BEP), 보라 점선이 현재 설정 위치
+      </div>
+      <div style="position: relative; width: 100%; height: 320px;">
+        <canvas id="utilization-chart">스케줄 가동률 차트</canvas>
+      </div>
+      <div id="util-bep" style="margin-top: 12px; padding: 10px 14px; background: var(--color-bg-secondary); border-radius: var(--border-radius-md); font-size: 13px;"></div>
+    </div>
+
+    <!-- 인사이트 -->
+    <div style="margin-top: 16px; background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
+      <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">💡 손익분기 인사이트</div>
+      <div id="s-insights" style="font-size: 13px; line-height: 1.7;"></div>
+    </div>
+  </div>
+
+  <!-- 민감도 탭 -->
   <div id="tab-sens" style="display: none;">
     <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 16px; margin-bottom: 16px; font-size: 13px;">
       <strong style="font-weight: 500;">현재 기준 순이익:</strong>
@@ -259,21 +478,7 @@
 </div>
 
 <script>
-// =================================================================
-// ⚙️ 설정값 (이 부분만 수정하면 됩니다)
-// =================================================================
-
-// 강사 근무 조건 — 슬롯 기반 계산
-const TEACHER_WORK = {
-  workDays: 5,            // 주당 근무일
-  dailyMinutes: 240,      // 일일 근무시간 (분) = 4시간
-  slotMinutes: 20,        // 1개 슬롯 = 20분 (최소 수업 단위)
-  breakSlotsPerDay: 1,    // 일일 휴식 슬롯 수 (20분 휴게)
-  minSessionsPerWeek: 2   // 학생 1명의 주당 최소 수업 횟수
-};
-// 위 값으로 1인당 최대 학생수 자동 계산:
-// (240÷20 - 1) × 5 ÷ 2 = 11 × 5 ÷ 2 = 27.5명
-
+const TEACHER_WORK = { workDays: 5, dailyMinutes: 240, slotMinutes: 20, breakSlotsPerDay: 1, minSessionsPerWeek: 2 };
 const PRICE = {
   '1_20':  [48000, 96000, 144000, 192000, 240000],
   '1_40':  [96000, 192000, 288000, 384000, 480000],
@@ -284,7 +489,6 @@ const PRICE = {
   '12_20': [460800/12, 921600/12, 1382400/12, 1843200/12, 2304000/12],
   '12_40': [921600/12, 1843200/12, 2764800/12, 3686400/12, 4608000/12]
 };
-
 const PRODUCTS = [
   {id:'p1_20_w2',  months:1,  duration:20, weekly:2, label:'1개월 20분 주2회 (최소)',     pct: 10},
   {id:'p6_20_w2',  months:6,  duration:20, weekly:2, label:'6개월 20분 주2회',            pct: 15},
@@ -294,15 +498,8 @@ const PRODUCTS = [
   {id:'p6_40_w5',  months:6,  duration:40, weekly:5, label:'6개월 40분 주5회 (주력)',     pct: 15},
   {id:'p12_40_w3', months:12, duration:40, weekly:3, label:'12개월 40분 주3회 (20% 할인)', pct: 15}
 ];
-
-const INCENTIVE_RATE = {
-  'silver':   0.03,
-  'gold':     0.06,
-  'platinum': 0.09
-};
-
-// 초기 강사 명단 — PHP 16,000 기본 (채용공고 기준)
-// allocation: 학생 배정 비중 % (강사들 합이 100%)
+const INCENTIVE_RATE = { 'silver': 0.03, 'gold': 0.06, 'platinum': 0.09 };
+const PERIOD_DISCOUNT = { 1: 0, 3: 10, 6: 15, 12: 20 };
 const INITIAL_TEACHERS = [
   { name: '강사1', tier: 'gold',     salaryPHP: 16000, allocation: 20 },
   { name: '강사2', tier: 'silver',   salaryPHP: 16000, allocation: 20 },
@@ -311,21 +508,18 @@ const INITIAL_TEACHERS = [
   { name: '강사5', tier: 'gold',     salaryPHP: 16000, allocation: 20 }
 ];
 
-// =================================================================
-// 이하 로직
-// =================================================================
-
 (function(){
+  // Chart.js annotation 플러그인 등록 (BEP 점선용)
+  if (window.Chart && window['chartjs-plugin-annotation']) {
+    Chart.register(window['chartjs-plugin-annotation']);
+  }
+
   const $ = id => document.getElementById(id);
   const fmt = n => new Intl.NumberFormat('ko-KR').format(Math.round(n));
   const productPrice = p => PRICE[`${p.months}_${p.duration}`][p.weekly-1];
-
-  // 강사 1명당 최대 학생수 계산 (슬롯 기반)
   function maxStudentsPerTeacher(){
     const dailySlots = Math.floor(TEACHER_WORK.dailyMinutes / TEACHER_WORK.slotMinutes);
-    const teachingSlotsPerDay = dailySlots - TEACHER_WORK.breakSlotsPerDay;
-    const weeklySlots = teachingSlotsPerDay * TEACHER_WORK.workDays;
-    return weeklySlots / TEACHER_WORK.minSessionsPerWeek;
+    return ((dailySlots - TEACHER_WORK.breakSlotsPerDay) * TEACHER_WORK.workDays) / TEACHER_WORK.minSessionsPerWeek;
   }
 
   let currentPeriod = 1;
@@ -354,22 +548,14 @@ const INITIAL_TEACHERS = [
   }
 
   function addTeacher(data){
-    const t = Object.assign({
-      id: ++teacherId, name: '강사 ' + teacherId,
-      tier: 'silver', salaryPHP: 16000, allocation: 20
-    }, data || {});
-    teachers.push(t);
-    renderTeachers();
-    calc();
+    const t = Object.assign({ id: ++teacherId, name: '강사 ' + teacherId, tier: 'silver', salaryPHP: 16000, allocation: 20 }, data || {});
+    teachers.push(t); renderTeachers(); calc();
   }
-
   function removeTeacher(id){
     const idx = teachers.findIndex(t => t.id === id);
     if (idx >= 0) teachers.splice(idx, 1);
-    renderTeachers();
-    calc();
+    renderTeachers(); calc();
   }
-
   function renderTeachers(){
     const tbody = $('teacher-rows');
     tbody.innerHTML = teachers.map(t => `
@@ -382,19 +568,13 @@ const INITIAL_TEACHERS = [
             <option value="platinum" ${t.tier==='platinum'?'selected':''}>플래티넘 (9%)</option>
           </select>
         </td>
-        <td style="padding: 6px;">
-          <input type="number" data-field="salaryPHP" value="${t.salaryPHP}" min="0" max="200000" step="500" style="width: 90px; font-size: 12px; text-align: right;"/>
-        </td>
+        <td style="padding: 6px;"><input type="number" data-field="salaryPHP" value="${t.salaryPHP}" min="0" max="200000" step="500" style="width: 90px; font-size: 12px; text-align: right;"/></td>
         <td data-cell="salaryKRW" style="padding: 6px; text-align: right; color: var(--color-text-secondary);">-</td>
-        <td style="padding: 6px; text-align: center;">
-          <input type="number" data-field="allocation" value="${t.allocation}" min="0" max="100" step="1" style="width: 60px; font-size: 12px; text-align: center;"/>%
-        </td>
+        <td style="padding: 6px; text-align: center;"><input type="number" data-field="allocation" value="${t.allocation}" min="0" max="100" step="1" style="width: 60px; font-size: 12px; text-align: center;"/>%</td>
         <td data-cell="students" style="padding: 6px; text-align: center; color: var(--color-text-secondary);">-</td>
         <td data-cell="incentive" style="padding: 6px; text-align: right; color: var(--color-text-secondary);">-</td>
         <td data-cell="total" style="padding: 6px; text-align: right; color: var(--color-text-danger);">-</td>
-        <td style="padding: 6px; text-align: right;">
-          <button data-action="remove" style="font-size: 11px; padding: 2px 8px; height: 24px;" aria-label="삭제"><i class="ti ti-trash"></i></button>
-        </td>
+        <td style="padding: 6px; text-align: right;"><button data-action="remove" style="font-size: 11px; padding: 2px 8px; height: 24px;"><i class="ti ti-trash"></i></button></td>
       </tr>
     `).join('');
     tbody.querySelectorAll('input, select').forEach(el => {
@@ -419,35 +599,23 @@ const INITIAL_TEACHERS = [
     let avgRevenuePerStudent = 0;
     const productList = productPcts || PRODUCTS;
     const mixSum = productList.reduce((s,p) => s + p.pct, 0) || 1;
-    productList.forEach(p => {
-      avgRevenuePerStudent += productPrice(p) * (p.pct / mixSum);
-    });
-
+    productList.forEach(p => { avgRevenuePerStudent += productPrice(p) * (p.pct / mixSum); });
     const maxStudents = maxStudentsPerTeacher();
     const teacherList = teachersOverride || teachers;
-
-    // 강사별 학생 배정 = 모객수 × (배정비중% / 합계)
     const allocSum = teacherList.reduce((s,t) => s + t.allocation, 0) || 1;
     const studentsPerTeacher = teacherList.map(t => targetStudents * (t.allocation / allocSum));
-
-    // 각 강사가 capacity 초과인지 체크하고, 초과는 잘라냄
     const actualStudentsPerTeacher = studentsPerTeacher.map(s => Math.min(s, maxStudents));
     const actualStudents = actualStudentsPerTeacher.reduce((s,v) => s + v, 0);
     const lostStudents = targetStudents - actualStudents;
-
     const overCapacityTeachers = [];
     teacherList.forEach((t, i) => {
-      if (studentsPerTeacher[i] > maxStudents) {
-        overCapacityTeachers.push({...t, requested: studentsPerTeacher[i], capped: actualStudentsPerTeacher[i]});
-      }
+      if (studentsPerTeacher[i] > maxStudents) overCapacityTeachers.push({...t, requested: studentsPerTeacher[i], capped: actualStudentsPerTeacher[i]});
     });
-
     const grossRevenue = actualStudents * avgRevenuePerStudent;
     const vatAmount = grossRevenue * vat;
     const netRevenue = grossRevenue - vatAmount;
     const partnerRevenue = netRevenue * partnerPct;
     const partnerCost = partnerRevenue * partnerRate;
-
     let totalSalaryKRW = 0, totalIncentiveKRW = 0, totalThirteenthKRW = 0;
     const teacherDetail = {};
     teacherList.forEach((t, i) => {
@@ -461,40 +629,20 @@ const INITIAL_TEACHERS = [
       totalThirteenthKRW += thirteenthKRW;
       teacherDetail[t.id] = { students: myStudents, incentiveKRW, salaryKRW, thirteenthKRW, requested: studentsPerTeacher[i] };
     });
-
     const provisions = totalSalaryKRW * (bonus + sev);
     const teacherCostTotal = totalSalaryKRW + totalIncentiveKRW + totalThirteenthKRW + provisions;
     const operatingCost = teacherCostTotal + partnerCost + admin + misc;
     const operatingProfit = netRevenue - operatingCost;
     const corpTax = Math.max(0, operatingProfit) * taxRate;
     const netProfit = operatingProfit - corpTax;
-
-    return {
-      grossRevenue, vatAmount, netRevenue, partnerRevenue, partnerCost,
-      totalSalary: totalSalaryKRW, totalIncentive: totalIncentiveKRW,
-      totalThirteenth: totalThirteenthKRW, provisions, teacherCostTotal,
-      admin, misc, operatingCost, operatingProfit, corpTax, netProfit,
-      teacherDetail, maxStudentsPerTeacher: maxStudents,
-      actualStudents, lostStudents, overCapacityTeachers, allocSum
-    };
+    return { grossRevenue, vatAmount, netRevenue, partnerRevenue, partnerCost, totalSalary: totalSalaryKRW, totalIncentive: totalIncentiveKRW, totalThirteenth: totalThirteenthKRW, provisions, teacherCostTotal, admin, misc, operatingCost, operatingProfit, corpTax, netProfit, teacherDetail, maxStudentsPerTeacher: maxStudents, actualStudents, lostStudents, overCapacityTeachers, allocSum };
   }
 
   function getInputs(){
-    return {
-      targetStudents: +$('students').value,
-      partnerPct: +$('partner-pct').value / 100,
-      partnerRate: +$('partner-rate').value / 100,
-      fx: +$('fx').value,
-      bonus: +$('bonus').value / 100,
-      sev: +$('severance').value / 100,
-      admin: +$('admin').value * 10000,
-      misc: +$('misc').value * 10000,
-      vat: +$('vat').value / 100,
-      taxRate: +$('tax').value / 100
-    };
+    return { targetStudents: +$('students').value, partnerPct: +$('partner-pct').value / 100, partnerRate: +$('partner-rate').value / 100, fx: +$('fx').value, bonus: +$('bonus').value / 100, sev: +$('severance').value / 100, admin: +$('admin').value * 10000, misc: +$('misc').value * 10000, vat: +$('vat').value / 100, taxRate: +$('tax').value / 100 };
   }
 
-  let costChart, trendChart, tornadoChart;
+  let costChart, trendChart, tornadoChart, utilizationChart;
 
   function calc(){
     const inp = getInputs();
@@ -508,31 +656,26 @@ const INITIAL_TEACHERS = [
     $('lbl-misc').textContent = fmt(inp.misc/10000) + '만';
     $('lbl-vat').textContent = (inp.vat*100).toFixed(1) + '%';
     $('lbl-tax').textContent = (inp.taxRate*100).toFixed(0) + '%';
-
     const mixSum = PRODUCTS.reduce((s,p) => s + p.pct, 0);
     $('mix-warn').textContent = mixSum === 100 ? '' : `⚠ 비중 합계 ${mixSum}%`;
-
     const r = computeProfit(inp);
     const N = currentPeriod;
-
     const partnerStudents = Math.round(r.actualStudents * inp.partnerPct);
     const ownStudents = Math.round(r.actualStudents) - partnerStudents;
     $('lbl-channel-breakdown').textContent = `자체 ${ownStudents}명 · 파트너 ${partnerStudents}명`;
     $('lbl-max-per-teacher').textContent = `(1인당 최대 ${r.maxStudentsPerTeacher.toFixed(1)}명)`;
     $('alloc-info').textContent = `배정 비중 합계: ${r.allocSum}% ${r.allocSum === 100 ? '✓' : '⚠ 100% 권장'}`;
     $('alloc-info').style.color = r.allocSum === 100 ? 'var(--color-text-tertiary)' : 'var(--color-text-warning)';
-
     $('kpi-capacity').textContent = Math.round(r.actualStudents) + '명';
     if (r.lostStudents > 0.5) {
       $('kpi-capacity').style.color = 'var(--color-text-danger)';
       $('capacity-warning').style.display = 'block';
       const names = r.overCapacityTeachers.map(t => `${t.name}(${t.requested.toFixed(1)}→${t.capped.toFixed(1)}명)`).join(', ');
-      $('warn-msg').textContent = ` 모객 ${inp.targetStudents}명 중 ${Math.round(r.actualStudents)}명만 수용 (${Math.round(r.lostStudents)}명 손실). 초과 강사: ${names}`;
+      $('warn-msg').textContent = ` 모객 ${inp.targetStudents}명 중 ${Math.round(r.actualStudents)}명만 수용. 초과: ${names}`;
     } else {
       $('kpi-capacity').style.color = 'var(--color-text-success)';
       $('capacity-warning').style.display = 'none';
     }
-
     teachers.forEach(t => {
       const info = r.teacherDetail[t.id];
       if (!info) return;
@@ -549,12 +692,10 @@ const INITIAL_TEACHERS = [
         row.querySelector('[data-cell="total"]').textContent = '-' + fmt(total);
       }
     });
-
     $('kpi-revenue').textContent = fmt(r.netRevenue * N / 10000) + '만원';
     $('kpi-cost').textContent = fmt((r.operatingCost + r.corpTax + r.vatAmount) * N / 10000) + '만원';
     $('kpi-profit').textContent = fmt(r.netProfit * N / 10000) + '만원';
     $('kpi-profit').style.color = r.netProfit >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)';
-
     const rows = [
       [`총 수강료 (실수용 ${Math.round(r.actualStudents)}명)`, r.grossRevenue * N, 'pos', true],
       [`　└ 부가세 (${(inp.vat*100).toFixed(1)}%)`, -r.vatAmount * N, 'neg', false],
@@ -579,7 +720,6 @@ const INITIAL_TEACHERS = [
       const border = bold ? 'border-top: 0.5px solid var(--color-border-tertiary);' : '';
       return `<tr style="${border}"><td style="padding: 6px 0; font-weight: ${weight};">${label}</td><td style="padding: 6px 0; text-align: right; font-weight: ${weight}; color: ${type === 'sub' ? 'var(--color-text-secondary)' : color};">${fmt(val)}</td></tr>`;
     }).join('');
-
     updateCharts(r, inp, N);
     if ($('tab-sens').style.display !== 'none') renderSensitivity();
     $('sens-baseline').textContent = fmt(r.netProfit * N / 10000) + '만원';
@@ -589,17 +729,14 @@ const INITIAL_TEACHERS = [
     const costData = [r.teacherCostTotal, r.partnerCost, r.admin, r.misc, r.vatAmount, r.corpTax].map(v => v * N);
     const costLabels = ['강사 인건비', '파트너 분배', '관리직원', '기타', '부가세', '법인세'];
     const costColors = ['#7F77DD', '#D85A30', '#378ADD', '#888780', '#EF9F27', '#BA7517'];
-    if (costChart) {
-      costChart.data.datasets[0].data = costData;
-      costChart.update('none');
-    } else {
+    if (costChart) { costChart.data.datasets[0].data = costData; costChart.update('none'); }
+    else {
       costChart = new Chart($('cost-chart'), {
         type: 'doughnut',
         data: { labels: costLabels, datasets: [{ data: costData, backgroundColor: costColors, borderWidth: 0 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 11 }, boxWidth: 10, boxHeight: 10, padding: 5 } }, tooltip: { callbacks: { label: ctx => ctx.label + ': ' + fmt(ctx.parsed/10000) + '만' } } } }
       });
     }
-
     const trendPoints = [];
     for (let p = 0; p <= 100; p += 5) {
       const result = computeProfit({ ...inp, partnerPct: p / 100 });
@@ -689,13 +826,292 @@ const INITIAL_TEACHERS = [
     $('sens-table').innerHTML = `<tr style="border-bottom: 0.5px solid var(--color-border-secondary); color: var(--color-text-secondary);"><th style="text-align: left; padding: 8px 6px; font-weight: 400;">변수</th><th style="text-align: right; padding: 8px 6px; font-weight: 400;">↑ ${(delta*100).toFixed(0)}%</th><th style="text-align: right; padding: 8px 6px; font-weight: 400;">↓ ${(delta*100).toFixed(0)}%</th><th style="text-align: right; padding: 8px 6px; font-weight: 400;">최대 영향</th></tr>` + results.map(r => `<tr style="border-bottom: 0.5px solid var(--color-border-tertiary);"><td style="padding: 6px;">${r.name}</td><td style="padding: 6px; text-align: right; color: ${r.up >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)'};">${r.up >= 0 ? '+' : ''}${fmt(r.up/10000)}만</td><td style="padding: 6px; text-align: right; color: ${r.down >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)'};">${r.down >= 0 ? '+' : ''}${fmt(r.down/10000)}만</td><td style="padding: 6px; text-align: right; font-weight: 500;">${fmt(r.magnitude/10000)}만</td></tr>`).join('');
   }
 
+  // =================================================================
+  // 간소화 탭
+  // =================================================================
+  let userTouchedDiscount = false;
+
+  // 강사 1명 + N명 학생일 때의 월 손익 계산 (스케줄 가동률 차트용)
+  function simpleTeacherProfit(students, params){
+    const { monthlyPaidPrice, salaryKRW, thirteenthMonthly, incentiveRate, partnerRate, vat, miscPerStudent } = params;
+    // 강사 1명의 고정비
+    const fixedCost = salaryKRW + thirteenthMonthly;
+    // 학생당 변동수입/변동비
+    const revPerStudent = monthlyPaidPrice;
+    const vatPerStudent = revPerStudent * vat;
+    const netRevPerStudent = revPerStudent - vatPerStudent;
+    const incentivePerStudent = revPerStudent * incentiveRate;
+    const partnerPerStudent = netRevPerStudent * partnerRate;
+    const variableCostPerStudent = incentivePerStudent + partnerPerStudent + miscPerStudent;
+    // 학생 N명일 때
+    const totalNetRev = netRevPerStudent * students;
+    const totalVariableCost = variableCostPerStudent * students;
+    const profit = totalNetRev - fixedCost - totalVariableCost;
+    return { profit, totalNetRev, fixedCost, totalVariableCost };
+  }
+
+  function calcSimple(){
+    const duration = +$('s-duration').value;
+    const weekly = +$('s-weekly').value;
+    const months = +$('s-months').value;
+    const discount = +$('s-discount').value / 100;
+    const hourly = +$('s-hourly').value;
+    const salaryPHP = +$('s-salary').value;
+    const fx = +$('s-fx').value;
+    const tier = $('s-tier').value;
+    const utilPct = +$('s-students').value;  // 가동률 %
+    const maxStudPreview = maxStudentsPerTeacher();
+    const studentsPerTeacher = (utilPct / 100) * maxStudPreview;  // 학생수로 변환
+    const isPartner = $('s-is-partner').value === '1';
+    const partnerRate = isPartner ? (+$('s-partner').value / 100) : 0;
+    const vat = +$('s-vat').value / 100;
+    const miscPerStudent = +$('s-misc').value;
+
+    $('s-weekly-val').textContent = weekly + '회';
+    $('s-discount-val').textContent = (discount*100).toFixed(0) + '%';
+    $('s-hourly-val').textContent = fmt(hourly) + '원';
+    $('s-salary-val').textContent = fmt(salaryPHP) + ' PHP';
+    $('s-fx-val').textContent = fx.toFixed(1) + '원';
+    $('s-students-val').textContent = utilPct + '% (' + studentsPerTeacher.toFixed(1) + '명)';
+    $('s-partner-val').textContent = (+$('s-partner').value).toFixed(0) + '%';
+    $('s-vat-val').textContent = (vat*100).toFixed(1) + '%';
+
+    const sessionsPerMonth = weekly * 4.33;
+    const sessionPriceListed = hourly * (duration / 60);
+    const monthlyListPrice = sessionPriceListed * sessionsPerMonth;
+    const monthlyPaidPrice = monthlyListPrice * (1 - discount);
+    const discountAmt = monthlyListPrice - monthlyPaidPrice;
+    const totalContract = monthlyPaidPrice * months;
+
+    $('s-list-price').textContent = fmt(monthlyListPrice) + '원';
+    $('s-discount-amt').textContent = '-' + fmt(discountAmt) + '원';
+    $('s-paid-price').textContent = fmt(monthlyPaidPrice) + '원';
+    $('s-total-contract').textContent = fmt(totalContract) + '원';
+
+    const salaryKRW = salaryPHP * fx;
+    const thirteenthTotal = salaryKRW * (months / 12);
+    const thirteenthPerStudentTotal = thirteenthTotal / studentsPerTeacher;
+    const thirteenthPerStudentMonthly = thirteenthPerStudentTotal / months;
+    const thirteenthMonthly = salaryKRW * (months / 12) / months;  // 강사 1명의 월 13th 충당
+    const salaryPerStudent = salaryKRW / studentsPerTeacher;
+    const incentivePerStudent = monthlyPaidPrice * INCENTIVE_RATE[tier];
+    const teacherCostPerStudent = salaryPerStudent + thirteenthPerStudentMonthly + incentivePerStudent;
+
+    $('s-salary-krw').textContent = fmt(salaryKRW) + '원';
+    $('s-salary-per').textContent = fmt(salaryPerStudent) + '원';
+    $('s-thirteenth-per').textContent = fmt(thirteenthPerStudentMonthly) + '원';
+    $('s-incentive-per').textContent = fmt(incentivePerStudent) + '원';
+    $('s-teacher-cost-per').textContent = fmt(teacherCostPerStudent) + '원';
+
+    const vatAmount = monthlyPaidPrice * vat;
+    const netRevenue = monthlyPaidPrice - vatAmount;
+    const partnerCost = netRevenue * partnerRate;
+    const profit = netRevenue - teacherCostPerStudent - partnerCost - miscPerStudent;
+    const margin = monthlyPaidPrice > 0 ? (profit / monthlyPaidPrice * 100) : 0;
+
+    $('s-rev').textContent = fmt(monthlyPaidPrice) + '원';
+    $('s-vat-amt').textContent = '-' + fmt(vatAmount) + '원';
+    $('s-tc').textContent = '-' + fmt(teacherCostPerStudent) + '원';
+    $('s-pc').textContent = '-' + fmt(partnerCost) + '원';
+    $('s-mc').textContent = '-' + fmt(miscPerStudent) + '원';
+    $('s-profit').textContent = fmt(profit) + '원';
+    $('s-profit-row').style.color = profit >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)';
+
+    $('big-revenue').textContent = fmt(monthlyPaidPrice) + '원';
+    $('big-months').textContent = months;
+    $('big-total').textContent = fmt(totalContract) + '원';
+    $('big-profit').textContent = fmt(profit) + '원';
+    $('big-profit').style.color = profit >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)';
+    $('big-margin').textContent = margin.toFixed(1) + '%';
+    $('big-total-profit').textContent = fmt(profit * months) + '원';
+
+    // =========== 🆕 스케줄 가동률별 손익 차트 ===========
+    const maxStud = maxStudentsPerTeacher();
+    $('util-max').textContent = maxStud.toFixed(1) + '명';
+
+    const chartParams = {
+      monthlyPaidPrice,
+      salaryKRW,
+      thirteenthMonthly,
+      incentiveRate: INCENTIVE_RATE[tier],
+      partnerRate,
+      vat,
+      miscPerStudent
+    };
+
+    // 0~100% 가동률에 따른 학생수 및 손익
+    const utilPoints = [];
+    for (let pct = 0; pct <= 100; pct += 5) {
+      const students = (pct / 100) * maxStud;
+      const result = simpleTeacherProfit(students, chartParams);
+      utilPoints.push({ pct, students, profit: result.profit });
+    }
+
+    // 손익분기점 계산: profit = 0 인 가동률 찾기
+    // profit = netRev × students - fixedCost - variableCost × students = 0
+    // students = fixedCost / (netRev - variableCost)
+    const netRevPerStud = monthlyPaidPrice * (1 - vat);
+    const variableCostPerStud = monthlyPaidPrice * INCENTIVE_RATE[tier] + netRevPerStud * partnerRate + miscPerStudent;
+    const contributionMargin = netRevPerStud - variableCostPerStud;
+    const fixedCost = salaryKRW + thirteenthMonthly;
+    const bepStudents = contributionMargin > 0 ? fixedCost / contributionMargin : Infinity;
+    const bepPct = isFinite(bepStudents) ? (bepStudents / maxStud * 100) : Infinity;
+
+    // 차트 그리기
+    const labels = utilPoints.map(p => p.pct + '%');
+    const profitData = utilPoints.map(p => p.profit / 10000); // 만원 단위
+    const barColors = utilPoints.map(p => p.profit >= 0 ? 'rgba(29, 158, 117, 0.7)' : 'rgba(226, 75, 74, 0.7)');
+
+    // 현재 설정 위치 (학생 N명 / maxStud)
+    const currentPct = (studentsPerTeacher / maxStud) * 100;
+
+    // BEP 점선 데이터
+    const minProfit = Math.min(...profitData);
+    const maxProfit = Math.max(...profitData);
+
+    if (utilizationChart) {
+      utilizationChart.data.labels = labels;
+      utilizationChart.data.datasets[0].data = profitData;
+      utilizationChart.data.datasets[0].backgroundColor = barColors;
+      // BEP 어노테이션 갱신 - dataset 2번 (점선)
+      const bepLine = isFinite(bepPct) ? [
+        { x: bepPct, y: minProfit },
+        { x: bepPct, y: maxProfit }
+      ] : [];
+      utilizationChart.options.plugins.annotation.annotations.bepLine.value = isFinite(bepPct) ? bepPct / 5 : -1;
+      utilizationChart.options.plugins.annotation.annotations.bepLine.display = isFinite(bepPct);
+      utilizationChart.options.plugins.annotation.annotations.currentLine.value = currentPct / 5;
+      utilizationChart.update('none');
+    } else {
+      utilizationChart = new Chart($('utilization-chart'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: '월 순이익 (만원)',
+            data: profitData,
+            backgroundColor: barColors,
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: ctx => `가동률 ${ctx[0].label} (학생 ${(utilPoints[ctx[0].dataIndex].students).toFixed(1)}명)`,
+                label: ctx => `월 순이익: ${fmt(ctx.parsed.y * 10000)}원`
+              }
+            },
+            annotation: {
+              annotations: {
+                bepLine: {
+                  type: 'line',
+                  scaleID: 'x',
+                  value: isFinite(bepPct) ? bepPct / 5 : -1,
+                  borderColor: '#E24B4A',
+                  borderWidth: 2,
+                  borderDash: [6, 4],
+                  label: {
+                    display: true,
+                    content: 'BEP',
+                    position: 'start',
+                    backgroundColor: '#E24B4A',
+                    color: '#fff',
+                    font: { size: 11 }
+                  }
+                },
+                currentLine: {
+                  type: 'line',
+                  scaleID: 'x',
+                  value: currentPct / 5,
+                  borderColor: '#534AB7',
+                  borderWidth: 2,
+                  borderDash: [3, 3]
+                },
+                zeroLine: {
+                  type: 'line',
+                  scaleID: 'y',
+                  value: 0,
+                  borderColor: 'rgba(128,128,128,0.5)',
+                  borderWidth: 1
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: { callback: v => fmt(v) + '만', font: { size: 11 } },
+              grid: { color: 'rgba(128,128,128,0.15)' }
+            },
+            x: {
+              ticks: { font: { size: 10 }, maxRotation: 0 },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // BEP 텍스트 박스
+    if (isFinite(bepPct) && bepPct <= 100) {
+      $('util-bep').innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>📍 <strong>손익분기점: 가동률 ${bepPct.toFixed(1)}%</strong> (학생 ${bepStudents.toFixed(1)}명)</div>
+          <div style="color: var(--color-text-secondary);">현재: ${currentPct.toFixed(1)}% (${studentsPerTeacher.toFixed(1)}명) ${currentPct >= bepPct ? '<span style="color: var(--color-text-success);">✓ 흑자 영역</span>' : '<span style="color: var(--color-text-danger);">✗ 적자 영역</span>'}</div>
+        </div>
+        <div style="margin-top: 6px; font-size: 12px; color: var(--color-text-tertiary);">
+          학생 1명당 공헌이익 ${fmt(contributionMargin)}원으로 강사 고정비 ${fmt(fixedCost)}원을 회수하려면 ${bepStudents.toFixed(1)}명 필요
+        </div>
+      `;
+    } else {
+      $('util-bep').innerHTML = `
+        <div style="color: var(--color-text-danger);">⚠ <strong>학생을 풀가동(${maxStud.toFixed(1)}명)해도 흑자 불가능</strong></div>
+        <div style="font-size: 12px; color: var(--color-text-tertiary); margin-top: 6px;">
+          학생 1명당 공헌이익(${fmt(contributionMargin)}원) × 최대 학생수(${maxStud.toFixed(1)}명) < 강사 고정비(${fmt(fixedCost)}원). 수강료↑ 또는 강사 월급↓ 필요
+        </div>
+      `;
+    }
+
+    // 인사이트
+    const insights = [];
+    if (profit < 0) {
+      insights.push(`<span style="color: var(--color-text-danger);">⚠ 현재 설정: 학생 1명당 월 ${fmt(-profit)}원 적자</span>`);
+    } else {
+      insights.push(`<span style="color: var(--color-text-success);">✓ 현재 설정: 학생 1명당 월 ${fmt(profit)}원 흑자</span> (마진 ${margin.toFixed(1)}%)`);
+      // 풀가동 시 강사 1명의 월 순이익
+      const fullResult = simpleTeacherProfit(maxStud, chartParams);
+      insights.push(`💪 강사 1명 풀가동(${maxStud.toFixed(1)}명) 시 월 순이익: <strong>${fmt(fullResult.profit)}원</strong>`);
+    }
+    const teacherCostShare = monthlyPaidPrice > 0 ? (teacherCostPerStudent / monthlyPaidPrice * 100) : 0;
+    insights.push(`💡 수강료 대비 강사비 비중: ${teacherCostShare.toFixed(1)}% <span style="color: var(--color-text-tertiary);">(업계 평균 40-60%)</span>`);
+    $('s-insights').innerHTML = insights.join('<br>');
+  }
+
+  $('s-months').addEventListener('change', () => {
+    if (!userTouchedDiscount) {
+      const m = +$('s-months').value;
+      $('s-discount').value = PERIOD_DISCOUNT[m];
+    }
+    calcSimple();
+  });
+  $('s-discount').addEventListener('input', () => {
+    userTouchedDiscount = true;
+    calcSimple();
+  });
+
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
       document.querySelectorAll('.tab-btn').forEach(b => b.style.background = b.dataset.tab === tab ? 'var(--color-bg-primary)' : 'transparent');
       $('tab-sim').style.display = tab === 'sim' ? 'block' : 'none';
+      $('tab-simple').style.display = tab === 'simple' ? 'block' : 'none';
       $('tab-sens').style.display = tab === 'sens' ? 'block' : 'none';
+      $('period-toggle-wrapper').style.visibility = tab === 'simple' ? 'hidden' : 'visible';
       if (tab === 'sens') renderSensitivity();
+      if (tab === 'simple') calcSimple();
     });
   });
   document.querySelectorAll('.period-btn').forEach(btn => {
@@ -710,7 +1126,6 @@ const INITIAL_TEACHERS = [
 
   renderMix();
   INITIAL_TEACHERS.forEach(t => addTeacher(t));
-
   $('add-teacher').addEventListener('click', () => addTeacher());
   $('reset-mix').addEventListener('click', () => {
     const defaults = {p1_20_w2:10, p6_20_w2:15, p1_40_w3:5, p3_40_w3:10, p6_40_w3:30, p6_40_w5:15, p12_40_w3:15};
@@ -719,7 +1134,22 @@ const INITIAL_TEACHERS = [
     calc();
   });
   ['students','partner-pct','partner-rate','fx','bonus','severance','admin','misc','vat','tax'].forEach(id => $(id).addEventListener('input', calc));
+  ['s-duration','s-weekly','s-hourly','s-salary','s-fx','s-tier','s-students','s-is-partner','s-partner','s-vat','s-misc'].forEach(id => {
+    $(id).addEventListener('input', calcSimple);
+    $(id).addEventListener('change', calcSimple);
+  });
+
+  calcSimple();
 })();
+</script>
+
+<!-- Chart.js annotation plugin -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script>
+  // 어노테이션 플러그인 등록 (페이지 로드 후)
+  if (window.Chart && window['chartjs-plugin-annotation']) {
+    Chart.register(window['chartjs-plugin-annotation']);
+  }
 </script>
 </body>
 </html>
