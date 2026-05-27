@@ -100,7 +100,6 @@
   <h1>📊 교육 사업 순이익 시뮬레이션 대시보드</h1>
   <p class="subtitle">슬라이더를 움직여 변수를 조정하면 순이익이 실시간으로 계산됩니다.</p>
 
-  <!-- 탭 + 기간 토글 -->
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px;">
     <div style="display: flex; gap: 4px; background: var(--color-bg-tertiary); padding: 4px; border-radius: var(--border-radius-md);">
       <button class="tab-btn" data-tab="sim" style="background: var(--color-bg-primary);"><i class="ti ti-adjustments"></i> 시뮬레이션</button>
@@ -118,9 +117,7 @@
     </div>
   </div>
 
-  <!-- 시뮬레이션 탭 -->
   <div id="tab-sim">
-    <!-- KPI -->
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem;">
       <div style="background: var(--color-bg-primary); border-radius: var(--border-radius-md); padding: 1rem; border: 0.5px solid var(--color-border-tertiary);">
         <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px;"><span class="period-label">1개월</span> 수익</div>
@@ -135,7 +132,7 @@
         <div id="kpi-profit" style="font-size: 22px; font-weight: 500;">0</div>
       </div>
       <div style="background: var(--color-bg-primary); border-radius: var(--border-radius-md); padding: 1rem; border: 0.5px solid var(--color-border-tertiary);">
-        <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px;">실제 수용 학생 <span id="lbl-max-per-teacher" style="color: var(--color-text-tertiary); font-size: 11px;">(1인당 0명)</span></div>
+        <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px;">실제 수용 학생 <span id="lbl-max-per-teacher" style="color: var(--color-text-tertiary); font-size: 11px;">(1인당 최대 0명)</span></div>
         <div id="kpi-capacity" style="font-size: 22px; font-weight: 500;">0명</div>
       </div>
     </div>
@@ -145,7 +142,6 @@
       <span id="warn-msg"></span>
     </div>
 
-    <!-- 학생 & 파트너 -->
     <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem;">
       <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">수강생 & 파트너 채널</div>
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
@@ -171,7 +167,6 @@
       </div>
     </div>
 
-    <!-- 상품 믹스 -->
     <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div style="font-size: 14px; font-weight: 500;">상품 믹스</div>
@@ -186,102 +181,61 @@
       <button id="reset-mix" style="margin-top: 8px;"><i class="ti ti-refresh"></i> 기본값으로</button>
     </div>
 
-    <!-- 강사 명단 -->
     <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <div style="font-size: 14px; font-weight: 500;">강사 명단</div>
+        <div style="font-size: 14px; font-weight: 500;">강사 명단 <span style="font-weight: 400; color: var(--color-text-tertiary); font-size: 12px;">— 강사별 학생 배정 비중 직접 조정</span></div>
         <button id="add-teacher"><i class="ti ti-plus"></i> 강사 추가</button>
       </div>
       <div style="overflow-x: auto;">
-        <table style="width: 100%; font-size: 13px; min-width: 760px;">
+        <table style="width: 100%; font-size: 13px; min-width: 860px;">
           <thead>
             <tr style="border-bottom: 0.5px solid var(--color-border-secondary); color: var(--color-text-secondary);">
               <th style="text-align: left; padding: 8px 6px; font-weight: 400;">이름</th>
               <th style="text-align: center; padding: 8px 6px; font-weight: 400;">등급</th>
-              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">월 기본급(원)</th>
+              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">월급 (PHP)</th>
+              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">월급 (원)</th>
+              <th style="text-align: center; padding: 8px 6px; font-weight: 400;">배정 비중 %</th>
               <th style="text-align: center; padding: 8px 6px; font-weight: 400;">담당학생</th>
-              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">인센티브(PHP)</th>
-              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">13th month</th>
-              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">월 총비용</th>
+              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">인센티브 (PHP)</th>
+              <th style="text-align: right; padding: 8px 6px; font-weight: 400;">월 총비용 (원)</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="teacher-rows"></tbody>
         </table>
       </div>
+      <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 8px;" id="alloc-info">배정 비중 합계: 100%</div>
     </div>
 
-    <!-- 운영비 + 차트 -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
       <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
         <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">회사 운영비</div>
-        <div style="margin-bottom: 14px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>PHP 환율</span><span id="lbl-fx" style="font-weight: 500;">24원</span>
-          </div>
-          <input type="range" id="fx" min="15" max="35" step="0.5" value="24" />
-        </div>
-        <div style="margin-bottom: 14px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>상여금 비율</span><span id="lbl-bonus" style="font-weight: 500;">20%</span>
-          </div>
-          <input type="range" id="bonus" min="0" max="100" step="5" value="20" />
-        </div>
-        <div style="margin-bottom: 14px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>퇴직금 비율</span><span id="lbl-severance" style="font-weight: 500;">10%</span>
-          </div>
-          <input type="range" id="severance" min="0" max="20" step="0.5" value="10" />
-        </div>
-        <div style="margin-bottom: 14px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>관리직원 인건비 (만)</span><span id="lbl-admin" style="font-weight: 500;">600만</span>
-          </div>
-          <input type="range" id="admin" min="0" max="5000" step="50" value="600" />
-        </div>
-        <div style="margin-bottom: 14px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>기타 운영비 (만)</span><span id="lbl-misc" style="font-weight: 500;">300만</span>
-          </div>
-          <input type="range" id="misc" min="0" max="5000" step="50" value="300" />
-        </div>
-        <div style="margin-bottom: 14px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>부가세 (VAT)</span><span id="lbl-vat" style="font-weight: 500;">10%</span>
-          </div>
-          <input type="range" id="vat" min="0" max="20" step="0.5" value="10" />
-        </div>
-        <div>
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-            <span>법인세율</span><span id="lbl-tax" style="font-weight: 500;">22%</span>
-          </div>
-          <input type="range" id="tax" min="0" max="40" step="1" value="22" />
-        </div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>PHP 환율 (1 PHP = ? 원)</span><span id="lbl-fx" style="font-weight: 500;">24원</span></div><input type="range" id="fx" min="15" max="35" step="0.5" value="24" /></div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>상여금 비율</span><span id="lbl-bonus" style="font-weight: 500;">20%</span></div><input type="range" id="bonus" min="0" max="100" step="5" value="20" /></div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>퇴직금 비율</span><span id="lbl-severance" style="font-weight: 500;">10%</span></div><input type="range" id="severance" min="0" max="20" step="0.5" value="10" /></div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>관리직원 인건비 (만)</span><span id="lbl-admin" style="font-weight: 500;">600만</span></div><input type="range" id="admin" min="0" max="5000" step="50" value="600" /></div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>기타 운영비 (만)</span><span id="lbl-misc" style="font-weight: 500;">300만</span></div><input type="range" id="misc" min="0" max="5000" step="50" value="300" /></div>
+        <div style="margin-bottom: 14px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>부가세 (VAT)</span><span id="lbl-vat" style="font-weight: 500;">10%</span></div><input type="range" id="vat" min="0" max="20" step="0.5" value="10" /></div>
+        <div><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;"><span>법인세율</span><span id="lbl-tax" style="font-weight: 500;">22%</span></div><input type="range" id="tax" min="0" max="40" step="1" value="22" /></div>
       </div>
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
           <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">비용 구성</div>
-          <div style="position: relative; width: 100%; height: 200px;">
-            <canvas id="cost-chart" role="img" aria-label="비용 구성">비용 구성</canvas>
-          </div>
+          <div style="position: relative; width: 100%; height: 200px;"><canvas id="cost-chart">비용 구성</canvas></div>
         </div>
         <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
           <div style="font-size: 14px; font-weight: 500; margin-bottom: 8px;">파트너 비중별 순이익 추이</div>
-          <div style="position: relative; width: 100%; height: 200px;">
-            <canvas id="trend-chart" role="img" aria-label="파트너 추이">파트너 추이</canvas>
-          </div>
+          <div style="position: relative; width: 100%; height: 200px;"><canvas id="trend-chart">파트너 추이</canvas></div>
         </div>
       </div>
     </div>
 
-    <!-- 손익 상세 -->
     <div style="margin-top: 1rem; background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
       <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;"><span class="period-label">1개월</span> 손익 상세 (원)</div>
       <table id="pl-table" style="width: 100%; font-size: 13px;"></table>
     </div>
   </div>
 
-  <!-- 민감도 분석 탭 -->
   <div id="tab-sens" style="display: none;">
     <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 16px; margin-bottom: 16px; font-size: 13px;">
       <strong style="font-weight: 500;">현재 기준 순이익:</strong>
@@ -295,9 +249,7 @@
     </div>
     <div style="background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
       <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">변수별 순이익 변동폭</div>
-      <div style="position: relative; width: 100%; height: 420px;">
-        <canvas id="tornado" role="img" aria-label="토네이도">토네이도</canvas>
-      </div>
+      <div style="position: relative; width: 100%; height: 420px;"><canvas id="tornado">토네이도</canvas></div>
     </div>
     <div style="margin-top: 16px; background: var(--color-bg-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem;">
       <div style="font-size: 14px; font-weight: 500; margin-bottom: 12px;">변수별 상세</div>
@@ -311,15 +263,17 @@
 // ⚙️ 설정값 (이 부분만 수정하면 됩니다)
 // =================================================================
 
-// 강사 근무 조건 (고정값 - UI에서 빠짐)
+// 강사 근무 조건 — 슬롯 기반 계산
 const TEACHER_WORK = {
-  workDays: 5,        // 주당 근무일수
-  workHours: 4,       // 일일 근무시간
-  breakMinutes: 20    // 일일 휴게시간(분)
+  workDays: 5,            // 주당 근무일
+  dailyMinutes: 240,      // 일일 근무시간 (분) = 4시간
+  slotMinutes: 20,        // 1개 슬롯 = 20분 (최소 수업 단위)
+  breakSlotsPerDay: 1,    // 일일 휴식 슬롯 수 (20분 휴게)
+  minSessionsPerWeek: 2   // 학생 1명의 주당 최소 수업 횟수
 };
+// 위 값으로 1인당 최대 학생수 자동 계산:
+// (240÷20 - 1) × 5 ÷ 2 = 11 × 5 ÷ 2 = 27.5명
 
-// 수강료 가격표 (Image 1 기반)
-// 키: '기간(개월)_수업분', 값: [주1회, 주2회, 주3회, 주4회, 주5회] 월 수강료(원)
 const PRICE = {
   '1_20':  [48000, 96000, 144000, 192000, 240000],
   '1_40':  [96000, 192000, 288000, 384000, 480000],
@@ -331,7 +285,6 @@ const PRICE = {
   '12_40': [921600/12, 1843200/12, 2764800/12, 3686400/12, 4608000/12]
 };
 
-// 상품 라인업 (믹스 비중 기본값과 함께)
 const PRODUCTS = [
   {id:'p1_20_w2',  months:1,  duration:20, weekly:2, label:'1개월 20분 주2회 (최소)',     pct: 10},
   {id:'p6_20_w2',  months:6,  duration:20, weekly:2, label:'6개월 20분 주2회',            pct: 15},
@@ -342,31 +295,38 @@ const PRODUCTS = [
   {id:'p12_40_w3', months:12, duration:40, weekly:3, label:'12개월 40분 주3회 (20% 할인)', pct: 15}
 ];
 
-// 강사 인센티브 등급 (Image 2 기반)
 const INCENTIVE_RATE = {
   'silver':   0.03,
   'gold':     0.06,
   'platinum': 0.09
 };
 
-// 초기 강사 명단 (이름, 등급, 월급)
+// 초기 강사 명단 — PHP 16,000 기본 (채용공고 기준)
+// allocation: 학생 배정 비중 % (강사들 합이 100%)
 const INITIAL_TEACHERS = [
-  { name: '강사1', tier: 'gold',     salary: 400000 },
-  { name: '강사2', tier: 'silver',   salary: 400000 },
-  { name: '강사3', tier: 'silver',   salary: 400000 },
-  { name: '강사4', tier: 'platinum', salary: 400000 },
-  { name: '강사5', tier: 'gold',     salary: 400000 }
+  { name: '강사1', tier: 'gold',     salaryPHP: 16000, allocation: 20 },
+  { name: '강사2', tier: 'silver',   salaryPHP: 16000, allocation: 20 },
+  { name: '강사3', tier: 'silver',   salaryPHP: 16000, allocation: 20 },
+  { name: '강사4', tier: 'platinum', salaryPHP: 16000, allocation: 20 },
+  { name: '강사5', tier: 'gold',     salaryPHP: 16000, allocation: 20 }
 ];
 
 // =================================================================
-// 이하 로직 (수정 권장 X)
+// 이하 로직
 // =================================================================
 
 (function(){
   const $ = id => document.getElementById(id);
   const fmt = n => new Intl.NumberFormat('ko-KR').format(Math.round(n));
   const productPrice = p => PRICE[`${p.months}_${p.duration}`][p.weekly-1];
-  const studentWeeklyMinutes = p => p.duration * p.weekly;
+
+  // 강사 1명당 최대 학생수 계산 (슬롯 기반)
+  function maxStudentsPerTeacher(){
+    const dailySlots = Math.floor(TEACHER_WORK.dailyMinutes / TEACHER_WORK.slotMinutes);
+    const teachingSlotsPerDay = dailySlots - TEACHER_WORK.breakSlotsPerDay;
+    const weeklySlots = teachingSlotsPerDay * TEACHER_WORK.workDays;
+    return weeklySlots / TEACHER_WORK.minSessionsPerWeek;
+  }
 
   let currentPeriod = 1;
   let teacherId = 0;
@@ -394,7 +354,10 @@ const INITIAL_TEACHERS = [
   }
 
   function addTeacher(data){
-    const t = Object.assign({ id: ++teacherId, name: '강사 ' + teacherId, tier: 'silver', salary: 400000 }, data || {});
+    const t = Object.assign({
+      id: ++teacherId, name: '강사 ' + teacherId,
+      tier: 'silver', salaryPHP: 16000, allocation: 20
+    }, data || {});
     teachers.push(t);
     renderTeachers();
     calc();
@@ -420,11 +383,14 @@ const INITIAL_TEACHERS = [
           </select>
         </td>
         <td style="padding: 6px;">
-          <input type="number" data-field="salary" value="${t.salary}" min="0" max="3000000" step="10000" style="width: 90px; font-size: 12px; text-align: right;"/>
+          <input type="number" data-field="salaryPHP" value="${t.salaryPHP}" min="0" max="200000" step="500" style="width: 90px; font-size: 12px; text-align: right;"/>
+        </td>
+        <td data-cell="salaryKRW" style="padding: 6px; text-align: right; color: var(--color-text-secondary);">-</td>
+        <td style="padding: 6px; text-align: center;">
+          <input type="number" data-field="allocation" value="${t.allocation}" min="0" max="100" step="1" style="width: 60px; font-size: 12px; text-align: center;"/>%
         </td>
         <td data-cell="students" style="padding: 6px; text-align: center; color: var(--color-text-secondary);">-</td>
         <td data-cell="incentive" style="padding: 6px; text-align: right; color: var(--color-text-secondary);">-</td>
-        <td data-cell="thirteenth" style="padding: 6px; text-align: right; color: var(--color-text-secondary);">-</td>
         <td data-cell="total" style="padding: 6px; text-align: right; color: var(--color-text-danger);">-</td>
         <td style="padding: 6px; text-align: right;">
           <button data-action="remove" style="font-size: 11px; padding: 2px 8px; height: 24px;" aria-label="삭제"><i class="ti ti-trash"></i></button>
@@ -438,7 +404,7 @@ const INITIAL_TEACHERS = [
         const t = teachers.find(x => x.id === id);
         if (!t) return;
         let val = e.target.value;
-        if (field === 'salary') val = +val;
+        if (field === 'salaryPHP' || field === 'allocation') val = +val;
         t[field] = val;
         calc();
       });
@@ -449,26 +415,32 @@ const INITIAL_TEACHERS = [
   }
 
   function computeProfit(opts){
-    const { targetStudents, partnerPct, partnerRate, bonus, sev, admin, misc, vat, taxRate, productPcts, teachersOverride } = opts;
-    let avgRevenuePerStudent = 0, avgWeeklyMinutes = 0;
+    const { targetStudents, partnerPct, partnerRate, fx, bonus, sev, admin, misc, vat, taxRate, productPcts, teachersOverride } = opts;
+    let avgRevenuePerStudent = 0;
     const productList = productPcts || PRODUCTS;
     const mixSum = productList.reduce((s,p) => s + p.pct, 0) || 1;
     productList.forEach(p => {
       avgRevenuePerStudent += productPrice(p) * (p.pct / mixSum);
-      avgWeeklyMinutes += studentWeeklyMinutes(p) * (p.pct / mixSum);
     });
 
-    // 강사 1명당 실제 수업 가능 시간 (휴게 차감)
-    const dailyTeachingMinutes = (TEACHER_WORK.workHours * 60) - TEACHER_WORK.breakMinutes;
-    const weeklyTeachingMinutes = TEACHER_WORK.workDays * dailyTeachingMinutes;
-    const maxStudentsPerTeacher = avgWeeklyMinutes > 0 ? weeklyTeachingMinutes / avgWeeklyMinutes : 0;
-
+    const maxStudents = maxStudentsPerTeacher();
     const teacherList = teachersOverride || teachers;
-    const teacherCount = teacherList.length || 1;
-    const totalCapacity = Math.floor(teacherCount * maxStudentsPerTeacher);
-    const actualStudents = Math.min(targetStudents, totalCapacity);
+
+    // 강사별 학생 배정 = 모객수 × (배정비중% / 합계)
+    const allocSum = teacherList.reduce((s,t) => s + t.allocation, 0) || 1;
+    const studentsPerTeacher = teacherList.map(t => targetStudents * (t.allocation / allocSum));
+
+    // 각 강사가 capacity 초과인지 체크하고, 초과는 잘라냄
+    const actualStudentsPerTeacher = studentsPerTeacher.map(s => Math.min(s, maxStudents));
+    const actualStudents = actualStudentsPerTeacher.reduce((s,v) => s + v, 0);
     const lostStudents = targetStudents - actualStudents;
-    const studentsPerTeacher = teacherCount > 0 ? actualStudents / teacherCount : 0;
+
+    const overCapacityTeachers = [];
+    teacherList.forEach((t, i) => {
+      if (studentsPerTeacher[i] > maxStudents) {
+        overCapacityTeachers.push({...t, requested: studentsPerTeacher[i], capped: actualStudentsPerTeacher[i]});
+      }
+    });
 
     const grossRevenue = actualStudents * avgRevenuePerStudent;
     const vatAmount = grossRevenue * vat;
@@ -476,21 +448,22 @@ const INITIAL_TEACHERS = [
     const partnerRevenue = netRevenue * partnerPct;
     const partnerCost = partnerRevenue * partnerRate;
 
-    let totalSalary = 0, totalIncentive = 0, totalThirteenth = 0;
+    let totalSalaryKRW = 0, totalIncentiveKRW = 0, totalThirteenthKRW = 0;
     const teacherDetail = {};
-    teacherList.forEach(t => {
-      const teacherRevenue = studentsPerTeacher * avgRevenuePerStudent;
+    teacherList.forEach((t, i) => {
+      const myStudents = actualStudentsPerTeacher[i];
+      const teacherRevenue = myStudents * avgRevenuePerStudent;
       const incentiveKRW = teacherRevenue * INCENTIVE_RATE[t.tier];
-      const salaryKRW = t.salary;
+      const salaryKRW = t.salaryPHP * fx;
       const thirteenthKRW = salaryKRW / 12;
-      totalSalary += salaryKRW;
-      totalIncentive += incentiveKRW;
-      totalThirteenth += thirteenthKRW;
-      teacherDetail[t.id] = { studentsPerTeacher, incentiveKRW, salaryKRW, thirteenthKRW };
+      totalSalaryKRW += salaryKRW;
+      totalIncentiveKRW += incentiveKRW;
+      totalThirteenthKRW += thirteenthKRW;
+      teacherDetail[t.id] = { students: myStudents, incentiveKRW, salaryKRW, thirteenthKRW, requested: studentsPerTeacher[i] };
     });
 
-    const provisions = totalSalary * (bonus + sev);
-    const teacherCostTotal = totalSalary + totalIncentive + totalThirteenth + provisions;
+    const provisions = totalSalaryKRW * (bonus + sev);
+    const teacherCostTotal = totalSalaryKRW + totalIncentiveKRW + totalThirteenthKRW + provisions;
     const operatingCost = teacherCostTotal + partnerCost + admin + misc;
     const operatingProfit = netRevenue - operatingCost;
     const corpTax = Math.max(0, operatingProfit) * taxRate;
@@ -498,9 +471,11 @@ const INITIAL_TEACHERS = [
 
     return {
       grossRevenue, vatAmount, netRevenue, partnerRevenue, partnerCost,
-      totalSalary, totalIncentive, totalThirteenth, provisions, teacherCostTotal,
+      totalSalary: totalSalaryKRW, totalIncentive: totalIncentiveKRW,
+      totalThirteenth: totalThirteenthKRW, provisions, teacherCostTotal,
       admin, misc, operatingCost, operatingProfit, corpTax, netProfit,
-      teacherDetail, maxStudentsPerTeacher, totalCapacity, actualStudents, lostStudents
+      teacherDetail, maxStudentsPerTeacher: maxStudents,
+      actualStudents, lostStudents, overCapacityTeachers, allocSum
     };
   }
 
@@ -541,19 +516,18 @@ const INITIAL_TEACHERS = [
     const N = currentPeriod;
 
     const partnerStudents = Math.round(r.actualStudents * inp.partnerPct);
-    const ownStudents = r.actualStudents - partnerStudents;
+    const ownStudents = Math.round(r.actualStudents) - partnerStudents;
     $('lbl-channel-breakdown').textContent = `자체 ${ownStudents}명 · 파트너 ${partnerStudents}명`;
-    $('lbl-max-per-teacher').textContent = `(1인당 ${r.maxStudentsPerTeacher.toFixed(1)}명)`;
+    $('lbl-max-per-teacher').textContent = `(1인당 최대 ${r.maxStudentsPerTeacher.toFixed(1)}명)`;
+    $('alloc-info').textContent = `배정 비중 합계: ${r.allocSum}% ${r.allocSum === 100 ? '✓' : '⚠ 100% 권장'}`;
+    $('alloc-info').style.color = r.allocSum === 100 ? 'var(--color-text-tertiary)' : 'var(--color-text-warning)';
 
-    $('kpi-capacity').textContent = r.actualStudents + '명';
-    if (r.lostStudents > 0) {
+    $('kpi-capacity').textContent = Math.round(r.actualStudents) + '명';
+    if (r.lostStudents > 0.5) {
       $('kpi-capacity').style.color = 'var(--color-text-danger)';
       $('capacity-warning').style.display = 'block';
-      $('warn-msg').textContent = ` 모객 ${inp.targetStudents}명 중 ${r.actualStudents}명만 수용 (${r.lostStudents}명 손실). 강사 ${Math.ceil(r.lostStudents / r.maxStudentsPerTeacher)}명 추가 필요.`;
-    } else if (r.totalCapacity > 0 && r.actualStudents / r.totalCapacity > 0.85) {
-      $('kpi-capacity').style.color = 'var(--color-text-warning)';
-      $('capacity-warning').style.display = 'block';
-      $('warn-msg').textContent = ` 가동률 ${Math.round(r.actualStudents/r.totalCapacity*100)}% — 여유 강사 확보 권장`;
+      const names = r.overCapacityTeachers.map(t => `${t.name}(${t.requested.toFixed(1)}→${t.capped.toFixed(1)}명)`).join(', ');
+      $('warn-msg').textContent = ` 모객 ${inp.targetStudents}명 중 ${Math.round(r.actualStudents)}명만 수용 (${Math.round(r.lostStudents)}명 손실). 초과 강사: ${names}`;
     } else {
       $('kpi-capacity').style.color = 'var(--color-text-success)';
       $('capacity-warning').style.display = 'none';
@@ -562,14 +536,16 @@ const INITIAL_TEACHERS = [
     teachers.forEach(t => {
       const info = r.teacherDetail[t.id];
       if (!info) return;
-      const phpAmount = (info.incentiveKRW * N) / inp.fx;
+      const phpIncentive = (info.incentiveKRW * N) / inp.fx;
       const total = (info.salaryKRW + info.incentiveKRW + info.thirteenthKRW + info.salaryKRW * (inp.bonus + inp.sev)) * N;
       const row = document.querySelector(`#teacher-rows tr[data-id="${t.id}"]`);
       if (row) {
-        const cap = r.maxStudentsPerTeacher.toFixed(1);
-        row.querySelector('[data-cell="students"]').innerHTML = `${info.studentsPerTeacher.toFixed(1)}명 <span style="color: var(--color-text-tertiary); font-size: 11px;">/${cap}</span>`;
-        row.querySelector('[data-cell="incentive"]').textContent = fmt(phpAmount) + ' PHP';
-        row.querySelector('[data-cell="thirteenth"]').textContent = fmt(info.thirteenthKRW * N) + '원';
+        const overCap = info.requested > r.maxStudentsPerTeacher;
+        row.querySelector('[data-cell="salaryKRW"]').textContent = fmt(info.salaryKRW * N) + '원';
+        row.querySelector('[data-cell="students"]').innerHTML = overCap 
+          ? `<span style="color: var(--color-text-danger);">${info.students.toFixed(1)}</span> <span style="color: var(--color-text-tertiary); font-size: 11px;">/${r.maxStudentsPerTeacher.toFixed(1)}</span>`
+          : `${info.students.toFixed(1)}명`;
+        row.querySelector('[data-cell="incentive"]').textContent = fmt(phpIncentive) + ' PHP';
         row.querySelector('[data-cell="total"]').textContent = '-' + fmt(total);
       }
     });
@@ -580,7 +556,7 @@ const INITIAL_TEACHERS = [
     $('kpi-profit').style.color = r.netProfit >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)';
 
     const rows = [
-      [`총 수강료 (실수용 ${r.actualStudents}명)`, r.grossRevenue * N, 'pos', true],
+      [`총 수강료 (실수용 ${Math.round(r.actualStudents)}명)`, r.grossRevenue * N, 'pos', true],
       [`　└ 부가세 (${(inp.vat*100).toFixed(1)}%)`, -r.vatAmount * N, 'neg', false],
       ['순 수강료 매출', r.netRevenue * N, 'pos', true],
       [`　└ 파트너 채널 (${(inp.partnerPct*100).toFixed(0)}%)`, r.partnerRevenue * N, 'sub', false],
@@ -656,33 +632,24 @@ const INITIAL_TEACHERS = [
     const baseline = computeProfit(inp).netProfit * N;
     const variables = [
       { name: '모객 수강생 수', apply: (i, k) => ({...i, targetStudents: i.targetStudents * (1+k)}) },
-      { name: '강사 수 (가상)', apply: (i, k) => i, special: 'teacherCount' },
       { name: '파트너 분배율', apply: (i, k) => ({...i, partnerRate: i.partnerRate * (1+k)}) },
       { name: '파트너 유입 비중', apply: (i, k) => ({...i, partnerPct: i.partnerPct * (1+k)}) },
       { name: '강사 상여금 비율', apply: (i, k) => ({...i, bonus: i.bonus * (1+k)}) },
       { name: '관리직원 인건비', apply: (i, k) => ({...i, admin: i.admin * (1+k)}) },
       { name: '기타 운영비', apply: (i, k) => ({...i, misc: i.misc * (1+k)}) },
+      { name: 'PHP 환율', apply: (i, k) => ({...i, fx: i.fx * (1+k)}) },
       { name: 'VAT 부가세', apply: (i, k) => ({...i, vat: i.vat * (1+k)}) },
       { name: '법인세율', apply: (i, k) => ({...i, taxRate: i.taxRate * (1+k)}) },
-      { name: '강사 월 기본급', apply: (i, k) => i, special: 'teachers' },
+      { name: '강사 월급 (PHP)', apply: (i, k) => i, special: 'teacherSalary' },
       { name: '주력상품 비중', apply: (i, k) => i, special: 'mainProduct' }
     ];
     const results = variables.map(v => {
       let upProfit, downProfit;
-      if (v.special === 'teachers') {
-        const up = teachers.map(t => ({...t, salary: t.salary * (1+delta)}));
-        const down = teachers.map(t => ({...t, salary: t.salary * (1-delta)}));
+      if (v.special === 'teacherSalary') {
+        const up = teachers.map(t => ({...t, salaryPHP: t.salaryPHP * (1+delta)}));
+        const down = teachers.map(t => ({...t, salaryPHP: t.salaryPHP * (1-delta)}));
         upProfit = computeProfit({...inp, teachersOverride: up}).netProfit * N;
         downProfit = computeProfit({...inp, teachersOverride: down}).netProfit * N;
-      } else if (v.special === 'teacherCount') {
-        const baseCount = teachers.length;
-        const upCount = Math.round(baseCount * (1+delta));
-        const downCount = Math.max(1, Math.round(baseCount * (1-delta)));
-        const upTeachers = [];
-        for (let i = 0; i < upCount; i++) upTeachers.push(teachers[i % baseCount]);
-        const downTeachers = teachers.slice(0, downCount);
-        upProfit = computeProfit({...inp, teachersOverride: upTeachers}).netProfit * N;
-        downProfit = computeProfit({...inp, teachersOverride: downTeachers}).netProfit * N;
       } else if (v.special === 'mainProduct') {
         const flex = (sign) => {
           const main = PRODUCTS.find(p => p.id === 'p6_40_w3');
@@ -722,7 +689,6 @@ const INITIAL_TEACHERS = [
     $('sens-table').innerHTML = `<tr style="border-bottom: 0.5px solid var(--color-border-secondary); color: var(--color-text-secondary);"><th style="text-align: left; padding: 8px 6px; font-weight: 400;">변수</th><th style="text-align: right; padding: 8px 6px; font-weight: 400;">↑ ${(delta*100).toFixed(0)}%</th><th style="text-align: right; padding: 8px 6px; font-weight: 400;">↓ ${(delta*100).toFixed(0)}%</th><th style="text-align: right; padding: 8px 6px; font-weight: 400;">최대 영향</th></tr>` + results.map(r => `<tr style="border-bottom: 0.5px solid var(--color-border-tertiary);"><td style="padding: 6px;">${r.name}</td><td style="padding: 6px; text-align: right; color: ${r.up >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)'};">${r.up >= 0 ? '+' : ''}${fmt(r.up/10000)}만</td><td style="padding: 6px; text-align: right; color: ${r.down >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)'};">${r.down >= 0 ? '+' : ''}${fmt(r.down/10000)}만</td><td style="padding: 6px; text-align: right; font-weight: 500;">${fmt(r.magnitude/10000)}만</td></tr>`).join('');
   }
 
-  // 탭 전환
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
@@ -732,8 +698,6 @@ const INITIAL_TEACHERS = [
       if (tab === 'sens') renderSensitivity();
     });
   });
-
-  // 기간 토글
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       currentPeriod = +btn.dataset.period;
@@ -742,10 +706,8 @@ const INITIAL_TEACHERS = [
       calc();
     });
   });
-
   $('sens-delta').addEventListener('input', renderSensitivity);
 
-  // 초기화
   renderMix();
   INITIAL_TEACHERS.forEach(t => addTeacher(t));
 
